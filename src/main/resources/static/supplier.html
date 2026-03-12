@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa, #f1f8e9);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #00796b;
+            color: white;
+            text-align: center;
+            padding: 25px 0;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 30px auto 50px auto;
+            background-color: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            text-align: center;
+            color: #004d40;
+            margin-bottom: 25px;
+        }
+
+        input {
+            display: block;
+            width: 95%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin: 5px 5px 5px 0;
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #00796b;
+            color: white;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #00796b;
+            color: white;
+        }
+
+        td button {
+            background-color: #26a69a;
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+
+        td button.delete-btn {
+            background-color: #d32f2f;
+        }
+
+        td button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>Supplier Management</header>
+
+    <div class="container">
+
+        <h3>Add / Edit Supplier</h3>
+
+        <input id="name" placeholder="Supplier Name">
+        <input id="email" placeholder="Email">
+        <input id="phone" placeholder="Phone">
+        <input id="city" placeholder="City">
+
+        <br>
+
+        <button onclick="saveSupplier()">Add</button>
+        <button onclick="loadSuppliers()">View Suppliers</button>
+
+    </div>
+
+    <table id="supplierTable">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Actions</th>
+        </tr>
+    </table>
+
+    <script>
+        function saveSupplier() {
+            let supplier = {
+                supplierName: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+                city: document.getElementById("city").value
+            };
+
+            fetch("/suppliers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(supplier)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Supplier Added");
+                resetForm();
+                loadSuppliers();
+            });
+        }
+
+        function loadSuppliers() {
+            fetch("/suppliers")
+            .then(res => res.json())
+            .then(data => {
+                let table = document.getElementById("supplierTable");
+                table.innerHTML = `
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                data.data.forEach(s => {
+                    table.innerHTML += `
+                        <tr>
+                            <td>${s.supplierId}</td>
+                            <td>${s.supplierName}</td>
+                            <td>${s.email}</td>
+                            <td>${s.phone}</td>
+                            <td>${s.city}</td>
+                            <td>
+                                <button onclick="editSupplier(${s.supplierId})">Edit</button>
+                                <button class="delete-btn" onclick="deleteSupplier(${s.supplierId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        function deleteSupplier(id) {
+            fetch("/suppliers/" + id, { method: "DELETE" })
+            .then(res => res.json())
+            .then(data => {
+                alert("Supplier Deleted");
+                loadSuppliers();
+            });
+        }
+
+        function editSupplier(id) {
+            fetch("/suppliers/" + id)
+            .then(res => res.json())
+            .then(data => {
+                if (data.data) {
+                    document.getElementById("name").value = data.data.supplierName;
+                    document.getElementById("email").value = data.data.email;
+                    document.getElementById("phone").value = data.data.phone;
+                    document.getElementById("city").value = data.data.city;
+
+                    const btn = document.querySelector("button[onclick='saveSupplier()']");
+                    btn.textContent = "Update";
+                    btn.onclick = function() { updateSupplier(id); }
+                } else {
+                    alert("Supplier not found!");
+                }
+            });
+        }
+
+        function updateSupplier(id) {
+            let supplier = {
+                supplierId: id,
+                supplierName: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+                city: document.getElementById("city").value
+            };
+
+            fetch("/suppliers", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(supplier)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Supplier Updated Successfully");
+                resetForm();
+                loadSuppliers();
+            });
+        }
+
+        function resetForm() {
+            document.getElementById("name").value = '';
+            document.getElementById("email").value = '';
+            document.getElementById("phone").value = '';
+            document.getElementById("city").value = '';
+
+            const btn = document.querySelector("button[onclick^='updateSupplier'], button[onclick='saveSupplier()']");
+            btn.textContent = "Add";
+            btn.onclick = saveSupplier;
+        }
+
+        window.onload = loadSuppliers;
+    </script>
+
+</body>
+</html>

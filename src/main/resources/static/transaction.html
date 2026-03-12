@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Transaction</title>
+
+<style>
+
+body{
+font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+background:linear-gradient(135deg,#e0f7fa,#f1f8e9);
+margin:0;
+padding:0;
+}
+
+header{
+background-color:#00796b;
+color:white;
+text-align:center;
+padding:25px 0;
+font-size:2rem;
+font-weight:bold;
+box-shadow:0 3px 6px rgba(0,0,0,0.2);
+}
+
+.container{
+max-width:700px;
+margin:30px auto 50px auto;
+background-color:white;
+padding:30px 20px;
+border-radius:15px;
+box-shadow:0 6px 12px rgba(0,0,0,0.1);
+}
+
+h3{
+text-align:center;
+color:#004d40;
+margin-bottom:25px;
+}
+
+input{
+display:block;
+width:95%;
+margin:10px 0;
+padding:10px;
+font-size:1em;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+button{
+margin:5px 5px 5px 0;
+padding:10px 15px;
+font-size:1em;
+cursor:pointer;
+border:none;
+border-radius:5px;
+background-color:#00796b;
+color:white;
+transition:0.3s;
+}
+
+button:hover{
+background-color:#004d40;
+}
+
+table{
+width:90%;
+margin:30px auto;
+border-collapse:collapse;
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background-color:#00796b;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>Stock Transaction</header>
+
+<div class="container">
+
+<h3>Add Transaction</h3>
+
+<input id="productId" placeholder="Product ID">
+<input id="quantity" placeholder="Quantity Change">
+
+<select id="type">
+<option value="IN">IN</option>
+<option value="OUT">OUT</option>
+</select>
+
+<br>
+
+<button onclick="saveTransaction()">Add</button>
+<button onclick="loadTransactions()">View Transactions</button>
+
+</div>
+
+<table id="transactionTable">
+
+<tr>
+<th>ID</th>
+<th>Product ID</th>
+<th>Quantity</th>
+<th>Type</th>
+</tr>
+
+</table>
+
+<script>
+
+function saveTransaction(){
+
+let transaction={
+
+product:{
+prodId:document.getElementById("productId").value
+},
+
+quantityChanged:document.getElementById("quantity").value,
+transactionType:document.getElementById("type").value
+
+};
+
+fetch("/transactions/save",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(transaction)
+})
+.then(res=>res.json())
+.then(data=>{
+alert("Transaction Saved");
+loadTransactions();
+});
+
+}
+
+function loadTransactions(){
+
+fetch("/transactions/fetchAll")
+.then(res=>res.json())
+.then(data=>{
+
+let table=document.getElementById("transactionTable");
+
+table.innerHTML=`
+<tr>
+<th>ID</th>
+<th>Product ID</th>
+<th>Quantity</th>
+<th>Type</th>
+</tr>
+`;
+
+data.data.forEach(t=>{
+
+table.innerHTML+=`
+
+<tr>
+<td>${t.transactionId}</td>
+<td>${t.product ? t.product.prodId : ''}</td>
+<td>${t.quantityChanged}</td>
+<td>${t.transactionType}</td>
+</tr>
+
+`;
+
+});
+
+});
+
+}
+
+window.onload=loadTransactions;
+
+</script>
+
+</body>
+</html>
